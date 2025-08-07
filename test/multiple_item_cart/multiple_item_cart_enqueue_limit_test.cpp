@@ -51,6 +51,8 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_single_consumer_all_
                                    queue.enqueue(scq::slot_id{2}, value_type{201}); // full cart 3
                                    ++enqueue_count;
 
+                                   // sleep to preven lost wakeup (this thread notifies before main thread waits)
+                                   std::this_thread::sleep_for(wait_time);
                                    enqueue_count_cv.notify_one();
 
                                    // this should block
@@ -143,6 +145,8 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_single_consumer_mixe
             queue.enqueue(scq::slot_id{2}, value_type{201}); // full cart 1
             ++enqueue_count;
 
+            // sleep to preven lost wakeup (this thread notifies before main thread waits)
+            std::this_thread::sleep_for(wait_time);
             enqueue_count_cv.notify_one();
 
             // this should block, because all 3 empty-carts were take: 2 carts are in fill-mode and 1 cart is full
@@ -249,6 +253,8 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_multiple_consumer_al
                                    queue.enqueue(scq::slot_id{2}, value_type{200}); // slot 2: [1/2]
                                    ++enqueue_count;
 
+                                   // sleep to preven lost wakeup (this thread notifies before main thread waits)
+                                   std::this_thread::sleep_for(wait_time);
                                    enqueue_count_cv.notify_one();
 
                                    // this should block
@@ -345,6 +351,8 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_multiple_consumer_mi
                                    queue.enqueue(scq::slot_id{2}, value_type{200}); // slot 2: [1/2]
                                    ++enqueue_count;
 
+                                   // sleep to preven lost wakeup (this thread notifies before main thread waits)
+                                   std::this_thread::sleep_for(wait_time);
                                    enqueue_count_cv.notify_one();
 
                                    // this should block, because the 3 empty carts are taken
@@ -481,6 +489,8 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_single_consumer_al
                     }
 
                     ++enqueue_count;
+                    // sleep to preven lost wakeup (this thread notifies before main thread waits)
+                    std::this_thread::sleep_for(wait_time);
                     enqueue_count_cv.notify_one();
                 });
         });
@@ -593,6 +603,8 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_single_consumer_mi
                               }
 
                               ++enqueue_count;
+                              // sleep to preven lost wakeup (this thread notifies before main thread waits)
+                              std::this_thread::sleep_for(wait_time);
                               enqueue_count_cv.notify_one();
                           });
                   });
@@ -730,6 +742,8 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_multiple_consumer_
                               }
 
                               ++enqueue_count;
+                              // sleep to preven lost wakeup (this thread notifies before main thread waits)
+                              std::this_thread::sleep_for(wait_time);
                               enqueue_count_cv.notify_one();
                           });
                   });
@@ -841,6 +855,8 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_multiple_consumer_
                               }
 
                               ++enqueue_count;
+                              // sleep to preven lost wakeup (this thread notifies before main thread waits)
+                              std::this_thread::sleep_for(wait_time);
                               enqueue_count_cv.notify_one();
                           });
                   });

@@ -440,7 +440,7 @@ struct slotted_cart_queue<value_t>::empty_carts_queue_t
                                      + " <= " + std::to_string(_cart_count)};
     }
 
-    std::ptrdiff_t _count{};
+    std::atomic<std::ptrdiff_t> _count{};
     std::size_t _cart_count{};
 
     std::vector<std::span<value_t>> _internal_queue{};
@@ -502,7 +502,7 @@ struct slotted_cart_queue<value_t>::full_carts_queue_t
                                      + " <= " + std::to_string(_cart_count)};
     }
 
-    std::ptrdiff_t _count{};
+    std::atomic<std::ptrdiff_t> _count{};
     std::size_t _cart_count{};
 
     std::vector<full_cart_type> _internal_queue{};
