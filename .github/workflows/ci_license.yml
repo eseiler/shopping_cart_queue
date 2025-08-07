@@ -1,0 +1,32 @@
+# SPDX-FileCopyrightText: 2006-2025, Knut Reinert & Freie Universität Berlin
+# SPDX-FileCopyrightText: 2016-2025, Knut Reinert & MPI für molekulare Genetik
+# SPDX-License-Identifier: CC0-1.0
+
+name: License
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: license-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'push' }}
+
+env:
+  TZ: Europe/Berlin
+
+jobs:
+  check:
+    name: REUSE Compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: REUSE Compliance Check
+        continue-on-error: false # Set to true to not fail the build in case of non-compliance.
+        uses: fsfe/reuse-action@v5
