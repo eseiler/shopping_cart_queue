@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2016-2025 Knut Reinert & MPI für molekulare Genetik
 SPDX-License-Identifier: CC0-1.0
 -->
 
-# SeqAn App Template [![build status][1]][2] [![codecov][3]][4]
+# shopping_cart_queue [![build status][1]][2] [![codecov][3]][4]
 <!--
     Above uses reference-style links with numbers.
     See also https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#links.
@@ -25,35 +25,35 @@ SPDX-License-Identifier: CC0-1.0
 <!--
     This is the CI badge image:
         `https://img.shields.io/github/workflow/status/` - we do not use GitHub's badges as they are not customisable.
-        `/seqan/app-template/` - owner/repository
+        `/eseiler/shopping_cart_queue/` - owner/repository
         `CI%20on%20Linux` - name of the workflow as encoded URL (e.g., whitespace = %20)
         `main` - branch to show
         `?style=flat&logo=github` - use a GitHub-style badge
-        `&label=App-Template%20CI` - text on the badge
+        `&label=shopping_cart_queue%20CI` - text on the badge
         `"Open GitHub actions page"` - this text will be shown on hover
 -->
-[1]: https://img.shields.io/github/actions/workflow/status/seqan/app-template/ci_linux.yml?branch=main&style=flat&logo=github&label=App-Template%20CI "Open GitHub actions page"
+[1]: https://img.shields.io/github/actions/workflow/status/eseiler/shopping_cart_queue/ci_linux.yml?branch=main&style=flat&logo=github&label=shopping_cart_queue%20CI "Open GitHub actions page"
 <!--
     This is the CI badge link:
-        `https://github.com/seqan/app-template/actions` - actions page of owner/repository
+        `https://github.com/eseiler/shopping_cart_queue/actions` - actions page of owner/repository
         `?query=branch%3Amain` - only show actions that ran on the mater branch
 -->
-[2]: https://github.com/seqan/app-template/actions?query=branch%3Amain
+[2]: https://github.com/eseiler/shopping_cart_queue/actions?query=branch%3Amain
 <!--
     This is the Codecov badge image:
-        Codecov offers badges: https://app.codecov.io/gh/seqan/app-template/settings/badge
+        Codecov offers badges: https://app.codecov.io/gh/eseiler/shopping_cart_queue/settings/badge
         While being logged in into Codecov, navigate to Settings->Badge and copy the markdown badge.
         Copy the image part of the markdown badge here.
     `"Open Codecov page"` - this text will be shown on hover
 -->
-[3]: https://codecov.io/gh/seqan/app-template/branch/main/graph/badge.svg "Open Codecov page"
+[3]: https://codecov.io/gh/eseiler/shopping_cart_queue/branch/main/graph/badge.svg "Open Codecov page"
 <!--
     This is the Codecov badge link:
-        Codecov offers badges: https://app.codecov.io/gh/seqan/app-template/settings/badge
+        Codecov offers badges: https://app.codecov.io/gh/eseiler/shopping_cart_queue/settings/badge
         While being logged in into Codecov, navigate to Settings->Badge and copy the markdown badge.
         Copy the URL part of the markdown badge here.
 -->
-[4]: https://codecov.io/gh/seqan/app-template
+[4]: https://codecov.io/gh/eseiler/shopping_cart_queue
 
 This is a template for C++ app developers.
 You can easily use this template and modify the existing code to suit your needs.
@@ -68,19 +68,7 @@ If you want to build an app, do the following:
 0. You need to be signed in with a **GitHub account**.
 1. Press the `Use this template`-Button to create your own repository. See [GitHub's documentation](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template) for more information.
 2. **Wait** for GitHub actions to create a commit in your new repository. The commit message will be `Initialise repository` and it will replace placeholders in the code. Afterwards, the README in your repository will be customised to your repository, among other things.
-<!-- InitDelete -->
----
-### :warning: Important :warning:
-
-From here on out, follow the instructions in your repository.
-
-You will probably need to reload your repository page to see the changes.
-
-The instructions below are for the template repository and will not work for your repository.
-
----
-<!-- DeleteInit -->
-3. **Clone** your repository locally: `git clone git@github.com:seqan/app-template.git`
+3. **Clone** your repository locally: `git clone git@github.com:eseiler/shopping_cart_queue.git`
 4. <details><summary>Build and test the app (example) </summary>
     In your local repository clone, you can do the following to build and test your app:
 
@@ -88,29 +76,29 @@ The instructions below are for the template repository and will not work for you
     mkdir build        # create build directory
     cd build           # step into build directory
     cmake ..           # call cmake on the repository
-    make               # build the app app-template
+    make               # build the app shopping_cart_queue
     make check         # build and run tests
-    ./bin/app-template # Execute the app (prints a short help page)
+    ./bin/shopping_cart_queue # Execute the app (prints a short help page)
     ```
    </details>
 
 ## Setting up Codecov (optional)
 
-1. Go to https://codecov.io/gh/seqan/app-template.
+1. Go to https://codecov.io/gh/eseiler/shopping_cart_queue.
 2. Sign in with your GitHub account.
-3. Go to https://app.codecov.io/gh/seqan/app-template/config/general.<br>
-   If the repository cannot be found, go to https://app.codecov.io/gh/seqan and click `Resync`.<br>
+3. Go to https://app.codecov.io/gh/eseiler/shopping_cart_queue/config/general.<br>
+   If the repository cannot be found, go to https://app.codecov.io/gh/eseiler and click `Resync`.<br>
    Then try again.
 4. Copy the `Repository Upload Token`.
-5. Go to https://github.com/seqan/app-template/settings/secrets/actions.
+5. Go to https://github.com/eseiler/shopping_cart_queue/settings/secrets/actions.
 6. Add a `New repository secret` with the name `CODECOV_TOKEN` and the value of the `Repository Upload Token`.
 7. Done! The next push to your repository will create a Codecov report.
 
 ## Setting up permissions for Lint action (optional)
 
-1. Go to https://github.com/seqan/app-template/settings/actions.
+1. Go to https://github.com/eseiler/shopping_cart_queue/settings/actions.
 2. Under `Workflow permissions`, at the very bottom, tick `Allow GitHub Actions to create and approve pull requests` and click `Save`.
-3. You can go to https://github.com/seqan/app-template/actions/workflows/lint.yml and click `Run workflow` to run linting.
+3. You can go to https://github.com/eseiler/shopping_cart_queue/actions/workflows/lint.yml and click `Run workflow` to run linting.
 
 ## Instructions for SeqAn3 Tutorial Purposes:
 
@@ -136,7 +124,7 @@ If you want to add a new cpp file (e.g., `tutorial1.cpp`) that is compiled and l
     ```cmake
     # Add another cpp file.
     add_executable (tutorial01 tutorial01.cpp)
-    target_link_libraries (tutorial01 PRIVATE "${PROJECT_NAME}_lib")
+    target_link_libraries (tutorial01 PRIVATE "shopping_cart_queue_lib")
     ```
 3. Go to the build directory `cd build`
 4. Refresh CMake `cmake .`
