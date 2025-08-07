@@ -55,6 +55,7 @@ jobs:
         run: make -k check
 
       - name: Generate coverage report
+        if: false
         run: |
           gcovr --root ${GITHUB_WORKSPACE} \
                 ${GITHUB_WORKSPACE}/build \
@@ -71,6 +72,7 @@ jobs:
 
       # https://docs.codecov.com/docs/adding-the-codecov-token
       - name: Submit coverage build
+        if: false
         uses: codecov/codecov-action@v5.4.3
         with:
           disable_search: true

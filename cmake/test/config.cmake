@@ -40,7 +40,9 @@ macro (add_app_test test_filename)
     add_executable (${target} ${test_filename})
     target_link_libraries (${target} shopping_cart_queue::test)
 
-    add_dependencies (${target} ${shopping_cart_queue_EXECUTABLE_LIST})
+    if (shopping_cart_queue_EXECUTABLE_LIST)
+        add_dependencies (${target} ${shopping_cart_queue_EXECUTABLE_LIST})
+    endif ()
     add_dependencies (check ${target})
 
     add_test (NAME ${target} COMMAND ${target})

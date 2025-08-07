@@ -8,10 +8,9 @@ cmake_minimum_required (VERSION 3.25)
 # the `add_app_test` macro, which is used to add tests to the CMake test suite.
 include (test/config)
 
-# This includes `test/data/datasources.cmake`, which makes test data available to the tests.
-include (data/datasources.cmake)
+add_subdirectory (single_item_cart)
+add_subdirectory (multiple_item_cart)
 
-add_app_test (api_fastq_coversion_test.cpp)
-add_app_test (cli_fastq_coversion_test.cpp)
+add_app_test (slotted_cart_queue_test.cpp)
 
 message (STATUS "You can run `make check` to build and run tests.")

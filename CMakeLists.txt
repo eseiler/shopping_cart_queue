@@ -30,10 +30,10 @@ CPMGetPackage (use_ccache) # Speeds up compilation by caching files that have be
 
 # Comment/Uncomment entries as needed.
 # If you change something here, make sure to add/remove the target in target_link_libraries of src/CMakeLists.txt.
-CPMGetPackage (fmindex) # FM-Index
-CPMGetPackage (hibf) # (Hierarchical) Interleaved Bloom Filter
-CPMGetPackage (seqan3) # Sequence analysis
-CPMGetPackage (sharg) # Argument parser
+# CPMGetPackage (fmindex) # FM-Index
+# CPMGetPackage (hibf) # (Hierarchical) Interleaved Bloom Filter
+# CPMGetPackage (seqan3) # Sequence analysis
+# CPMGetPackage (sharg) # Argument parser
 
 # Add the application. This will include `src/CMakeLists.txt`.
 add_subdirectory (src)
@@ -47,5 +47,5 @@ option (shopping_cart_queue_TEST "Enable testing for shopping_cart_queue." ${PRO
 if (shopping_cart_queue_TEST)
     enable_testing () # Makes ctest work in root build directory.
     # Add the tests. This will include `test/CMakeLists.txt`.
-    add_subdirectory (test EXCLUDE_FROM_ALL)
+    add_subdirectory (test)
 endif ()
