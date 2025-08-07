@@ -122,8 +122,10 @@ IncludeCategories:
     Priority:        3
   - Regex:           '<seqan3/'
     Priority:        4
-  - Regex:           '.*'
+  - Regex:           '<.*>'
     Priority:        5
+  - Regex:           '.*'
+    Priority:        6
 IncludeIsMainRegex: '(Test)?$'
 IncludeIsMainSourceRegex: ''
 IndentAccessModifiers: false
