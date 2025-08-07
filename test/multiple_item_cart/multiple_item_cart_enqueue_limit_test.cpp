@@ -38,9 +38,16 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_single_consumer_all_
     std::mutex enqueue_count_mutex{};
     std::condition_variable enqueue_count_cv{};
     std::atomic_size_t enqueue_count{};
+    bool ready = false;
 
-    std::thread enqueue_thread{[&queue, &enqueue_count, &enqueue_count_cv]
+    std::thread enqueue_thread{[&queue, &enqueue_count, &enqueue_count_cv, &enqueue_count_mutex, &ready]
                                {
+                                   std::unique_lock<std::mutex> enqueue_count_lock(enqueue_count_mutex);
+                                   enqueue_count_cv.wait(enqueue_count_lock,
+                                                         [&]
+                                                         {
+                                                             return ready;
+                                                         });
                                    queue.enqueue(scq::slot_id{1}, value_type{100});
                                    queue.enqueue(scq::slot_id{1}, value_type{101}); // full cart 1
                                    ++enqueue_count;
@@ -51,6 +58,7 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_single_consumer_all_
                                    queue.enqueue(scq::slot_id{2}, value_type{201}); // full cart 3
                                    ++enqueue_count;
 
+                                   enqueue_count_lock.unlock();
                                    enqueue_count_cv.notify_one();
 
                                    // this should block
@@ -58,6 +66,13 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_single_consumer_all_
                                    queue.enqueue(scq::slot_id{2}, value_type{203}); // full cart 4
                                    ++enqueue_count;
                                }};
+
+    // Make sure main thread is ready to prevent lost wakeup (this thread notifies before main thread waits)
+    {
+        std::unique_lock<std::mutex> enqueue_count_lock(enqueue_count_mutex);
+        ready = true;
+    }
+    enqueue_count_cv.notify_one();
 
     // wait until at least 3 carts are full
     {
@@ -131,10 +146,17 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_single_consumer_mixe
     std::mutex enqueue_count_mutex{};
     std::condition_variable enqueue_count_cv{};
     std::atomic_size_t enqueue_count{};
+    bool ready = false;
 
     std::thread enqueue_thread{
-        [&queue, &enqueue_count, &enqueue_count_cv]
+        [&queue, &enqueue_count, &enqueue_count_cv, &enqueue_count_mutex, &ready]
         {
+            std::unique_lock<std::mutex> enqueue_count_lock(enqueue_count_mutex);
+            enqueue_count_cv.wait(enqueue_count_lock,
+                                  [&]
+                                  {
+                                      return ready;
+                                  });
             queue.enqueue(scq::slot_id{0}, value_type{001}); // non-full cart 1 (will be released after close)
             ++enqueue_count;
             queue.enqueue(scq::slot_id{1}, value_type{100}); // non-full cart 2 (will be released after close)
@@ -143,6 +165,7 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_single_consumer_mixe
             queue.enqueue(scq::slot_id{2}, value_type{201}); // full cart 1
             ++enqueue_count;
 
+            enqueue_count_lock.unlock();
             enqueue_count_cv.notify_one();
 
             // this should block, because all 3 empty-carts were take: 2 carts are in fill-mode and 1 cart is full
@@ -150,6 +173,13 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_single_consumer_mixe
             queue.enqueue(scq::slot_id{2}, value_type{203}); // full cart 2
             ++enqueue_count;
         }};
+
+    // Make sure main thread is ready to prevent lost wakeup (this thread notifies before main thread waits)
+    {
+        std::unique_lock<std::mutex> enqueue_count_lock(enqueue_count_mutex);
+        ready = true;
+    }
+    enqueue_count_cv.notify_one();
 
     // wait until at least 3 carts are non-emtpy
     {
@@ -238,9 +268,16 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_multiple_consumer_al
     std::mutex enqueue_count_mutex{};
     std::condition_variable enqueue_count_cv{};
     std::atomic_size_t enqueue_count{};
+    bool ready = false;
 
-    std::thread enqueue_thread{[&queue, &enqueue_count, &enqueue_count_cv]
+    std::thread enqueue_thread{[&queue, &enqueue_count, &enqueue_count_cv, &enqueue_count_mutex, &ready]
                                {
+                                   std::unique_lock<std::mutex> enqueue_count_lock(enqueue_count_mutex);
+                                   enqueue_count_cv.wait(enqueue_count_lock,
+                                                         [&]
+                                                         {
+                                                             return ready;
+                                                         });
                                    queue.enqueue(scq::slot_id{0}, value_type{001}); // slot 0: [1/2]
                                    ++enqueue_count;
                                    queue.enqueue(scq::slot_id{1}, value_type{100}); // slot 1: [1/2]
@@ -249,6 +286,7 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_multiple_consumer_al
                                    queue.enqueue(scq::slot_id{2}, value_type{200}); // slot 2: [1/2]
                                    ++enqueue_count;
 
+                                   enqueue_count_lock.unlock();
                                    enqueue_count_cv.notify_one();
 
                                    // this should block
@@ -263,6 +301,13 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_multiple_consumer_al
                                    queue.enqueue(scq::slot_id{2}, value_type{203}); // slot 2: [2/2]
                                    ++enqueue_count;
                                }};
+
+    // Make sure main thread is ready to prevent lost wakeup (this thread notifies before main thread waits)
+    {
+        std::unique_lock<std::mutex> enqueue_count_lock(enqueue_count_mutex);
+        ready = true;
+    }
+    enqueue_count_cv.notify_one();
 
     // wait until at least 3 carts are non-empty
     {
@@ -334,9 +379,16 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_multiple_consumer_mi
     std::mutex enqueue_count_mutex{};
     std::condition_variable enqueue_count_cv{};
     std::atomic_size_t enqueue_count{};
+    bool ready = false;
 
-    std::thread enqueue_thread{[&queue, &enqueue_count, &enqueue_count_cv]
+    std::thread enqueue_thread{[&queue, &enqueue_count, &enqueue_count_cv, &enqueue_count_mutex, &ready]
                                {
+                                   std::unique_lock<std::mutex> enqueue_count_lock(enqueue_count_mutex);
+                                   enqueue_count_cv.wait(enqueue_count_lock,
+                                                         [&]
+                                                         {
+                                                             return ready;
+                                                         });
                                    queue.enqueue(scq::slot_id{0}, value_type{001}); // slot 0: [1/2]
                                    ++enqueue_count;
                                    queue.enqueue(scq::slot_id{1}, value_type{100}); // slot 1: [1/2]
@@ -345,6 +397,7 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_multiple_consumer_mi
                                    queue.enqueue(scq::slot_id{2}, value_type{200}); // slot 2: [1/2]
                                    ++enqueue_count;
 
+                                   enqueue_count_lock.unlock();
                                    enqueue_count_cv.notify_one();
 
                                    // this should block, because the 3 empty carts are taken
@@ -356,6 +409,13 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_multiple_consumer_mi
                                    queue.enqueue(scq::slot_id{2}, value_type{203}); // slot 2: [2/2]
                                    ++enqueue_count;
                                }};
+
+    // Make sure main thread is ready to prevent lost wakeup (this thread notifies before main thread waits)
+    {
+        std::unique_lock<std::mutex> enqueue_count_lock(enqueue_count_mutex);
+        ready = true;
+    }
+    enqueue_count_cv.notify_one();
 
     // wait until at least 3 carts are non-empty
     {
