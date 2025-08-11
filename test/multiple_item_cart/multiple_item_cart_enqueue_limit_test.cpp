@@ -498,6 +498,7 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_single_consumer_al
     std::mutex enqueue_count_mutex{};
     std::condition_variable enqueue_count_cv{};
     std::atomic_size_t enqueue_count{};
+    bool ready = false;
 
     // initialise 8 producing threads
     std::vector<std::thread> enqueue_threads(8);
@@ -508,9 +509,16 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_single_consumer_al
         {
             static size_t thread_id = 0;
             return std::thread(
-                [thread_id = thread_id++, &queue, &enqueue_count, &enqueue_count_cv]
+                [&, thread_id = thread_id++]
                 {
-                    std::this_thread::sleep_for(thread_id * wait_time);
+                    {
+                        std::unique_lock<std::mutex> enqueue_count_lock(enqueue_count_mutex);
+                        enqueue_count_cv.wait(enqueue_count_lock,
+                                              [&]
+                                              {
+                                                  return ready;
+                                              });
+                    }
 
                     switch (thread_id)
                     {
@@ -540,10 +548,20 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_single_consumer_al
                         break;
                     }
 
-                    ++enqueue_count;
-                    enqueue_count_cv.notify_one();
+                    {
+                        std::unique_lock<std::mutex> enqueue_count_lock(enqueue_count_mutex);
+                        ++enqueue_count;
+                    }
+                    enqueue_count_cv.notify_all();
                 });
         });
+
+    // Make sure main thread is ready to prevent lost wakeup (this thread notifies before main thread waits)
+    {
+        std::unique_lock<std::mutex> enqueue_count_lock(enqueue_count_mutex);
+        ready = true;
+    }
+    enqueue_count_cv.notify_all();
 
     // wait until at least 6 elements are inserted
     {
@@ -616,6 +634,7 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_single_consumer_mi
     std::mutex enqueue_count_mutex{};
     std::condition_variable enqueue_count_cv{};
     std::atomic_size_t enqueue_count{};
+    bool ready = false;
 
     // initialise 6 producing threads
     std::vector<std::thread> enqueue_threads(6);
@@ -625,9 +644,16 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_single_consumer_mi
                   {
                       static size_t thread_id = 0;
                       return std::thread(
-                          [thread_id = thread_id++, &queue, &enqueue_count, &enqueue_count_cv]
+                          [&, thread_id = thread_id++]
                           {
-                              std::this_thread::sleep_for(thread_id * wait_time);
+                              {
+                                  std::unique_lock<std::mutex> enqueue_count_lock(enqueue_count_mutex);
+                                  enqueue_count_cv.wait(enqueue_count_lock,
+                                                        [&]
+                                                        {
+                                                            return ready;
+                                                        });
+                              }
 
                               switch (thread_id)
                               {
@@ -644,6 +670,8 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_single_consumer_mi
                                   queue.enqueue(scq::slot_id{2}, value_type{200}); // cart 3 [1/2]
                                   break;
                               case 4:
+                                  // Will lock if this one is enqueued before case 3 or 5.
+                                  std::this_thread::sleep_for(wait_time * 5);
                                   queue.enqueue(scq::slot_id{1},
                                                 value_type{102}); // cart 4 [1/2] wait after 201 is inserted
                                   break;
@@ -652,10 +680,20 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_single_consumer_mi
                                   break;
                               }
 
-                              ++enqueue_count;
-                              enqueue_count_cv.notify_one();
+                              {
+                                  std::unique_lock<std::mutex> enqueue_count_lock(enqueue_count_mutex);
+                                  ++enqueue_count;
+                              }
+                              enqueue_count_cv.notify_all();
                           });
                   });
+
+    // Make sure main thread is ready to prevent lost wakeup (this thread notifies before main thread waits)
+    {
+        std::unique_lock<std::mutex> enqueue_count_lock(enqueue_count_mutex);
+        ready = true;
+    }
+    enqueue_count_cv.notify_all();
 
     // wait until at least 5 elements are inserted
     {
