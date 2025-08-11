@@ -2,19 +2,21 @@
 // SPDX-FileCopyrightText: 2016-2025 Knut Reinert & MPI für molekulare Genetik
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <gtest/gtest.h>
+#include <gtest/gtest.h> // for AssertionResult, Message, Test, TestPartResult, CmpHelperEQ, Cmp...
 
-#include <set>
+#include <cstddef> // for size_t
+#include <string>  // for basic_string
+#include <utility> // for pair
 
-#include <scq/slotted_cart_queue.hpp>
+#include <scq/slotted_cart_queue.hpp> // for slot_id, span, slotted_cart_queue, cart_future, cart_capacity
 
-#include "../concurrent_cross_off_list.hpp"
+#include "../concurrent_cross_off_list.hpp" // for concurrent_cross_off_list
 
 TEST(multiple_item_cart_sequential, single_cart_enqueue_dequeue)
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{5}, scq::cart_count{5}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 5, .carts = 5, .capacity = 2}};
 
     queue.enqueue(scq::slot_id{1}, value_type{100});
     queue.enqueue(scq::slot_id{1}, value_type{101});
@@ -24,7 +26,7 @@ TEST(multiple_item_cart_sequential, single_cart_enqueue_dequeue)
         EXPECT_TRUE(cart.valid());
         std::pair<scq::slot_id, std::span<value_type>> cart_data = cart.get();
 
-        EXPECT_EQ(cart_data.first.slot_id, 1);
+        EXPECT_EQ(cart_data.first.value, 1);
         EXPECT_EQ(cart_data.second.size(), 2);
         EXPECT_EQ(cart_data.second[0], value_type{100});
         EXPECT_EQ(cart_data.second[1], value_type{101});
@@ -38,7 +40,7 @@ TEST(multiple_item_cart_sequential, single_cart_enqueue_dequeue)
         EXPECT_TRUE(cart.valid());
         std::pair<scq::slot_id, std::span<value_type>> cart_data = cart.get();
 
-        EXPECT_EQ(cart_data.first.slot_id, 2);
+        EXPECT_EQ(cart_data.first.value, 2);
         EXPECT_EQ(cart_data.second.size(), 2);
         EXPECT_EQ(cart_data.second[0], value_type{200});
         EXPECT_EQ(cart_data.second[1], value_type{201});
@@ -49,16 +51,16 @@ TEST(multiple_item_cart_sequential, multiple_enqueue_dequeue)
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{5}, scq::cart_count{5}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 5, .carts = 5, .capacity = 2}};
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{{1, value_type{100}},
-                                                                           {1, value_type{101}},
-                                                                           {1, value_type{102}},
-                                                                           {1, value_type{103}},
-                                                                           {2, value_type{200}},
-                                                                           {2, value_type{201}}};
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{{1, value_type{100}},
+                                                                      {1, value_type{101}},
+                                                                      {1, value_type{102}},
+                                                                      {1, value_type{103}},
+                                                                      {2, value_type{200}},
+                                                                      {2, value_type{201}}};
 
     queue.enqueue(scq::slot_id{1}, value_type{103});
     queue.enqueue(scq::slot_id{2}, value_type{200});
@@ -77,7 +79,7 @@ TEST(multiple_item_cart_sequential, multiple_enqueue_dequeue)
 
         for (auto && value : cart_data.second)
         {
-            EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+            EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
         }
     }
 

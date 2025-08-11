@@ -2,16 +2,20 @@
 // SPDX-FileCopyrightText: 2016-2025 Knut Reinert & MPI für molekulare Genetik
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <gtest/gtest.h>
+#include <gtest/gtest.h> // for AssertionResult, Test, Message, TestPartResult, EXPECT_TRUE, Tes...
 
-#include <algorithm>
-#include <chrono>
-#include <set>
-#include <thread>
+#include <algorithm> // for generate
+#include <chrono>    // for operator*, milliseconds
+#include <cstddef>   // for size_t
+#include <ratio>     // for ratio
+#include <string>    // for basic_string
+#include <thread>    // for thread, sleep_for
+#include <utility>   // for pair
+#include <vector>    // for vector
 
-#include <scq/slotted_cart_queue.hpp>
+#include <scq/slotted_cart_queue.hpp> // for slot_id, slotted_cart_queue, span, cart_future, cart_capacity
 
-#include "../concurrent_cross_off_list.hpp"
+#include "../concurrent_cross_off_list.hpp" // for concurrent_cross_off_list
 
 static constexpr std::chrono::milliseconds wait_time(10);
 
@@ -19,16 +23,16 @@ TEST(multiple_item_cart_concurrent, single_producer_single_consumer)
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{5}, scq::cart_count{5}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 5, .carts = 5, .capacity = 2}};
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{{1, value_type{100}},
-                                                                           {1, value_type{101}},
-                                                                           {1, value_type{102}},
-                                                                           {1, value_type{103}},
-                                                                           {2, value_type{200}},
-                                                                           {2, value_type{201}}};
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{{1, value_type{100}},
+                                                                      {1, value_type{101}},
+                                                                      {1, value_type{102}},
+                                                                      {1, value_type{103}},
+                                                                      {2, value_type{200}},
+                                                                      {2, value_type{201}}};
 
     std::thread enqueue_thread{[&queue]()
                                {
@@ -55,7 +59,7 @@ TEST(multiple_item_cart_concurrent, single_producer_single_consumer)
 
         for (auto && value : cart_data.second)
         {
-            EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+            EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
         }
     }
 
@@ -69,16 +73,16 @@ TEST(multiple_item_cart_concurrent, single_producer_multiple_consumer)
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{5}, scq::cart_count{5}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 5, .carts = 5, .capacity = 2}};
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{{1, value_type{100}},
-                                                                           {1, value_type{101}},
-                                                                           {1, value_type{102}},
-                                                                           {1, value_type{103}},
-                                                                           {2, value_type{200}},
-                                                                           {2, value_type{201}}};
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{{1, value_type{100}},
+                                                                      {1, value_type{101}},
+                                                                      {1, value_type{102}},
+                                                                      {1, value_type{103}},
+                                                                      {2, value_type{200}},
+                                                                      {2, value_type{201}}};
 
     std::thread enqueue_thread{[&queue]()
                                {
@@ -112,7 +116,7 @@ TEST(multiple_item_cart_concurrent, single_producer_multiple_consumer)
 
                               for (auto && value : cart_data.second)
                               {
-                                  EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+                                  EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
                               }
                           });
                   });
@@ -130,16 +134,16 @@ TEST(multiple_item_cart_concurrent, multiple_producer_single_consumer)
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{5}, scq::cart_count{5}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 5, .carts = 5, .capacity = 2}};
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{{1, value_type{100}},
-                                                                           {1, value_type{101}},
-                                                                           {1, value_type{102}},
-                                                                           {1, value_type{103}},
-                                                                           {2, value_type{200}},
-                                                                           {2, value_type{201}}};
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{{1, value_type{100}},
+                                                                      {1, value_type{101}},
+                                                                      {1, value_type{102}},
+                                                                      {1, value_type{103}},
+                                                                      {2, value_type{200}},
+                                                                      {2, value_type{201}}};
 
     // initialise 6 producing threads
     std::vector<std::thread> enqueue_threads(6);
@@ -188,7 +192,7 @@ TEST(multiple_item_cart_concurrent, multiple_producer_single_consumer)
 
         for (auto && value : cart_data.second)
         {
-            EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+            EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
         }
     }
 
@@ -203,16 +207,16 @@ TEST(multiple_item_cart_concurrent, multiple_producer_multiple_consumer)
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{5}, scq::cart_count{5}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 5, .carts = 5, .capacity = 2}};
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{{1, value_type{100}},
-                                                                           {1, value_type{101}},
-                                                                           {1, value_type{102}},
-                                                                           {1, value_type{103}},
-                                                                           {2, value_type{200}},
-                                                                           {2, value_type{201}}};
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{{1, value_type{100}},
+                                                                      {1, value_type{101}},
+                                                                      {1, value_type{102}},
+                                                                      {1, value_type{103}},
+                                                                      {2, value_type{200}},
+                                                                      {2, value_type{201}}};
 
     // initialise 6 producing threads
     std::vector<std::thread> enqueue_threads(6);
@@ -268,7 +272,7 @@ TEST(multiple_item_cart_concurrent, multiple_producer_multiple_consumer)
 
                               for (auto && value : cart_data.second)
                               {
-                                  EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+                                  EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
                               }
                           });
                   });

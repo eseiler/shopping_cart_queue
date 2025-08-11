@@ -2,17 +2,20 @@
 // SPDX-FileCopyrightText: 2016-2025 Knut Reinert & MPI für molekulare Genetik
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <gtest/gtest.h>
+#include <gtest/gtest.h> // for AssertionResult, Message, TestPartResult, Test, EXPECT_TRUE, Cmp...
 
-#include <algorithm>
-#include <atomic>
-#include <chrono>
-#include <set>
-#include <thread>
+#include <algorithm> // for generate
+#include <chrono>    // for operator*, milliseconds
+#include <cstddef>   // for size_t
+#include <ratio>     // for ratio
+#include <string>    // for basic_string
+#include <thread>    // for thread, sleep_for
+#include <utility>   // for pair
+#include <vector>    // for vector
 
-#include <scq/slotted_cart_queue.hpp>
+#include <scq/slotted_cart_queue.hpp> // for slot_id, slotted_cart_queue, span, mutex, condition_variable
 
-#include "../concurrent_cross_off_list.hpp"
+#include "../concurrent_cross_off_list.hpp" // for concurrent_cross_off_list
 
 static constexpr std::chrono::milliseconds wait_time(10);
 
@@ -20,11 +23,11 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_single_consumer_all_
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{3}, scq::cart_count{3}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 3, .carts = 3, .capacity = 2}};
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{
         {1, value_type{100}},
         {1, value_type{101}}, // full cart 1
         {1, value_type{102}},
@@ -99,7 +102,7 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_single_consumer_all_
 
         for (auto && value : cart_data.second)
         {
-            EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+            EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
         }
     }
 
@@ -118,7 +121,7 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_single_consumer_all_
 
         for (auto && value : cart_data.second)
         {
-            EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+            EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
         }
     }
 
@@ -130,11 +133,11 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_single_consumer_mixe
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{3}, scq::cart_count{3}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 3, .carts = 3, .capacity = 2}};
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{
         {0, value_type{001}}, // non-full cart 1
         {1, value_type{100}}, // non-full cart 2
         {2, value_type{200}},
@@ -210,7 +213,7 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_single_consumer_mixe
 
         for (auto && value : cart_data.second)
         {
-            EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+            EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
         }
     }
 
@@ -233,7 +236,7 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_single_consumer_mixe
 
         for (auto && value : cart_data.second)
         {
-            EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+            EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
         }
     }
 
@@ -248,11 +251,11 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_multiple_consumer_al
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{3}, scq::cart_count{3}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 3, .carts = 3, .capacity = 2}};
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{
         {0, value_type{001}},
         {0, value_type{002}}, // full cart 1
         {1, value_type{100}},
@@ -341,7 +344,7 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_multiple_consumer_al
 
                               for (auto && value : cart_data.second)
                               {
-                                  EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+                                  EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
                               }
                           });
                   });
@@ -361,11 +364,11 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_multiple_consumer_mi
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{3}, scq::cart_count{3}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 3, .carts = 3, .capacity = 2}};
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{
         {0, value_type{001}}, // non-full cart 1
         {1, value_type{100}},
         {1, value_type{101}}, // full cart 1
@@ -456,7 +459,7 @@ TEST(multiple_item_cart_enqueue_limit_test, single_producer_multiple_consumer_mi
 
                               for (auto && value : cart_data.second)
                               {
-                                  EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+                                  EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
                               }
                           });
                   });
@@ -480,11 +483,11 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_single_consumer_al
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{3}, scq::cart_count{3}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 3, .carts = 3, .capacity = 2}};
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{
         {0, value_type{001}},
         {0, value_type{002}}, // full cart 1
         {1, value_type{100}},
@@ -570,7 +573,7 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_single_consumer_al
 
         for (auto && value : cart_data.second)
         {
-            EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+            EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
         }
     }
 
@@ -589,7 +592,7 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_single_consumer_al
 
         for (auto && value : cart_data.second)
         {
-            EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+            EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
         }
     }
 
@@ -601,11 +604,11 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_single_consumer_mi
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{3}, scq::cart_count{3}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 3, .carts = 3, .capacity = 2}};
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{
         {0, value_type{001}}, // non-full cart 1
         {1, value_type{100}},
         {1, value_type{101}}, // full cart 1
@@ -689,7 +692,7 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_single_consumer_mi
 
         for (auto && value : cart_data.second)
         {
-            EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+            EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
         }
     }
 
@@ -713,7 +716,7 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_single_consumer_mi
 
         for (auto && value : cart_data.second)
         {
-            EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+            EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
         }
     }
 
@@ -728,11 +731,11 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_multiple_consumer_
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{3}, scq::cart_count{3}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 3, .carts = 3, .capacity = 2}};
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{
         {0, value_type{001}},
         {0, value_type{002}}, // full cart 1
         {1, value_type{100}},
@@ -830,7 +833,7 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_multiple_consumer_
 
                               for (auto && value : cart_data.second)
                               {
-                                  EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+                                  EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
                               }
                           });
                   });
@@ -851,11 +854,11 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_multiple_consumer_
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{3}, scq::cart_count{3}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 3, .carts = 3, .capacity = 2}};
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{
         {0, value_type{001}}, // non-full cart 1
         {1, value_type{100}},
         {1, value_type{101}}, // full cart 1
@@ -951,7 +954,7 @@ TEST(multiple_item_cart_enqueue_limit_test, multiple_producer_multiple_consumer_
 
                               for (auto && value : cart_data.second)
                               {
-                                  EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+                                  EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
                               }
                           });
                   });
