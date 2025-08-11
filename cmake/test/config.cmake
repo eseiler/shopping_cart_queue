@@ -46,6 +46,7 @@ macro (add_app_test test_filename)
     add_dependencies (check ${target})
 
     add_test (NAME ${target} COMMAND ${target})
+    set_tests_properties (${target} PROPERTIES TIMEOUT 120)
 
     unset (source_file)
     unset (target)
