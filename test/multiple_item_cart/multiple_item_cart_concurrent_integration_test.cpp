@@ -2,39 +2,41 @@
 // SPDX-FileCopyrightText: 2016-2025 Knut Reinert & MPI für molekulare Genetik
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <gtest/gtest.h>
+#include <gtest/gtest.h> // for AssertionResult, Message, Test, TestPartResult, CmpHelperEQ, Cmp...
 
-#include <algorithm>
-#include <chrono>
-#include <set>
-#include <thread>
+#include <algorithm>        // for generate
+#include <cstddef>          // for size_t
+#include <initializer_list> // for initializer_list
+#include <string>           // for basic_string
+#include <thread>           // for thread
+#include <utility>          // for pair
+#include <vector>           // for vector
 
-#include <scq/slotted_cart_queue.hpp>
+#include <scq/slotted_cart_queue.hpp> // for slotted_cart_queue, slot_id, span, atomic_size_t, cart_capacity
 
-#include "../concurrent_cross_off_list.hpp"
+#include "../concurrent_cross_off_list.hpp" // for concurrent_cross_off_list
 
-static constexpr std::size_t max_iterations = 55555;
+static constexpr size_t max_iterations = 55555;
 
 TEST(multiple_item_cart_concurrent_integration, multiple_producer_multiple_consumer)
 {
     using value_type = int;
 
-    static constexpr scq::slot_count slot_count{5};
-    static constexpr scq::cart_capacity cart_capacity{8};
+    static constexpr size_t slot_count{5};
+    static constexpr size_t cart_capacity{8};
 
-    scq::slotted_cart_queue<value_type> queue{slot_count, scq::cart_count{10}, cart_capacity};
+    scq::slotted_cart_queue<value_type> queue{{.slots = slot_count, .carts = 10, .capacity = cart_capacity}};
 
-    static constexpr std::size_t expected_full_cart_count =
-        (max_iterations / cart_capacity.cart_capacity) * slot_count.slot_count;
-    static constexpr std::size_t expected_non_full_cart_count = slot_count.slot_count;
-    static constexpr std::size_t expected_non_full_cart_capacity = max_iterations % cart_capacity.cart_capacity;
+    static constexpr size_t expected_full_cart_count = (max_iterations / cart_capacity) * slot_count;
+    static constexpr size_t expected_non_full_cart_count = slot_count;
+    static constexpr size_t expected_non_full_cart_capacity = max_iterations % cart_capacity;
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{};
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{};
     for (size_t thread_id = 0; thread_id < 5; ++thread_id)
         for (size_t i = 0; i < max_iterations; ++i)
-            expected.insert(std::pair<std::size_t, value_type>{thread_id, i});
+            expected.insert(std::pair<size_t, value_type>{thread_id, i});
 
     // initialise 5 producing threads
     std::vector<std::thread> enqueue_threads(5);
@@ -65,7 +67,7 @@ TEST(multiple_item_cart_concurrent_integration, multiple_producer_multiple_consu
                       return std::thread(
                           [&queue, &expected, &full_cart_count, &non_full_cart_count]
                           {
-                              std::vector<std::pair<std::size_t, value_type>> results{};
+                              std::vector<std::pair<size_t, value_type>> results{};
                               results.reserve(max_iterations);
 
                               while (true)
@@ -84,10 +86,10 @@ TEST(multiple_item_cart_concurrent_integration, multiple_producer_multiple_consu
                                   std::pair<scq::slot_id, std::span<value_type>> cart_data = cart.get();
 
                                   size_t elements_count = cart_data.second.size();
-                                  if (elements_count == cart_capacity.cart_capacity)
+                                  if (elements_count == cart_capacity)
                                   {
                                       ++full_cart_count;
-                                      EXPECT_EQ(elements_count, cart_capacity.cart_capacity);
+                                      EXPECT_EQ(elements_count, cart_capacity);
                                   }
                                   else
                                   {
@@ -97,7 +99,7 @@ TEST(multiple_item_cart_concurrent_integration, multiple_producer_multiple_consu
 
                                   for (auto && value : cart_data.second)
                                   {
-                                      results.emplace_back(cart_data.first.slot_id, value);
+                                      results.emplace_back(cart_data.first.value, value);
                                   }
                               }
 

@@ -2,17 +2,20 @@
 // SPDX-FileCopyrightText: 2016-2025 Knut Reinert & MPI für molekulare Genetik
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <gtest/gtest.h>
+#include <gtest/gtest.h> // for AssertionResult, Test, Message, TestPartResult, TestInfo, EXPECT...
 
-#include <algorithm>
-#include <chrono>
-#include <set>
-#include <thread>
+#include <algorithm> // for generate
+#include <chrono>    // for milliseconds
+#include <cstddef>   // for size_t
+#include <string>    // for basic_string
+#include <thread>    // for thread, sleep_for
+#include <utility>   // for pair
+#include <vector>    // for vector
 
-#include <scq/slotted_cart_queue.hpp>
+#include <scq/slotted_cart_queue.hpp> // for slotted_cart_queue, slot_id, span, cart_future, future_error
 
-#include "../atomic_count.hpp"
-#include "../concurrent_cross_off_list.hpp"
+#include "../atomic_count.hpp"              // for atomic_count
+#include "../concurrent_cross_off_list.hpp" // for concurrent_cross_off_list
 
 static constexpr std::chrono::milliseconds wait_time(10);
 
@@ -20,7 +23,7 @@ TEST(multiple_item_cart_close_queue, no_producer_no_consumer_close_is_non_blocki
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{5}, scq::cart_count{5}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 5, .carts = 5, .capacity = 2}};
 
     queue.close();
 }
@@ -29,7 +32,7 @@ TEST(multiple_item_cart_close_queue, single_producer_no_consumer_enqueue_after_c
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{5}, scq::cart_count{5}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 5, .carts = 5, .capacity = 2}};
 
     queue.enqueue(scq::slot_id{1}, value_type{100});
     queue.enqueue(scq::slot_id{1}, value_type{101}); // one full cart
@@ -45,7 +48,7 @@ TEST(multiple_item_cart_close_queue, single_producer_no_consumer_release_blockin
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{5}, scq::cart_count{5}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 5, .carts = 5, .capacity = 2}};
 
     // count number of enqueues
     atomic_count enqueue_count{};
@@ -94,7 +97,7 @@ TEST(multiple_item_cart_close_queue, multiple_producer_no_consumer_enqueue_after
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{5}, scq::cart_count{5}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 5, .carts = 5, .capacity = 2}};
 
     // count number of enqueues
     atomic_count enqueue_count{};
@@ -155,7 +158,7 @@ TEST(multiple_item_cart_close_queue, no_producer_single_consumer_dequeue_after_c
 
     // close first then dequeue.
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{5}, scq::cart_count{5}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 5, .carts = 5, .capacity = 2}};
 
     queue.close();
 
@@ -173,7 +176,7 @@ TEST(multiple_item_cart_close_queue, no_producer_single_consumer_release_blockin
 
     // dequeue first then close.
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{5}, scq::cart_count{5}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 5, .carts = 5, .capacity = 2}};
 
     std::thread dequeue_thread{[&queue]
                                {
@@ -200,7 +203,7 @@ TEST(multiple_item_cart_close_queue, no_producer_multiple_consumer_dequeue_after
 
     // close first then dequeue.
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{5}, scq::cart_count{5}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 5, .carts = 5, .capacity = 2}};
 
     queue.close();
 
@@ -221,7 +224,7 @@ TEST(multiple_item_cart_close_queue, no_producer_multiple_consumer_release_block
 
     // dequeue first then close.
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{5}, scq::cart_count{5}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 5, .carts = 5, .capacity = 2}};
 
     // initialise 5 consuming threads
     std::vector<std::thread> dequeue_threads(5);
@@ -255,16 +258,16 @@ TEST(multiple_item_cart_close_queue, single_producer_single_consumer_dequeue_aft
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{5}, scq::cart_count{5}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 5, .carts = 5, .capacity = 2}};
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{{1, value_type{100}},
-                                                                           {1, value_type{101}},
-                                                                           {1, value_type{102}},
-                                                                           {1, value_type{103}},
-                                                                           {2, value_type{200}},
-                                                                           {2, value_type{201}}};
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{{1, value_type{100}},
+                                                                      {1, value_type{101}},
+                                                                      {1, value_type{102}},
+                                                                      {1, value_type{103}},
+                                                                      {2, value_type{200}},
+                                                                      {2, value_type{201}}};
 
     queue.enqueue(scq::slot_id{1}, value_type{100});
     queue.enqueue(scq::slot_id{1}, value_type{101}); // full-cart 1
@@ -287,7 +290,7 @@ TEST(multiple_item_cart_close_queue, single_producer_single_consumer_dequeue_aft
 
         for (auto && value : cart_data.second)
         {
-            EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+            EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
         }
     }
 
@@ -299,14 +302,14 @@ TEST(multiple_item_cart_close_queue, single_producer_single_consumer_dequeue_aft
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{5}, scq::cart_count{5}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 5, .carts = 5, .capacity = 2}};
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{{0, value_type{0}},
-                                                                           {1, value_type{104}},
-                                                                           {3, value_type{300}},
-                                                                           {4, value_type{400}}};
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{{0, value_type{0}},
+                                                                      {1, value_type{104}},
+                                                                      {3, value_type{300}},
+                                                                      {4, value_type{400}}};
 
     queue.enqueue(scq::slot_id{0}, value_type{0});   // half-filled cart
     queue.enqueue(scq::slot_id{1}, value_type{104}); // half-filled cart
@@ -327,7 +330,7 @@ TEST(multiple_item_cart_close_queue, single_producer_single_consumer_dequeue_aft
 
         for (auto && value : cart_data.second)
         {
-            EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+            EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
         }
     }
 
@@ -340,11 +343,11 @@ TEST(multiple_item_cart_close_queue,
 {
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{5}, scq::cart_count{7}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 5, .carts = 7, .capacity = 2}};
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{
         {0, value_type{0}}, // cart 1
         {1, value_type{100}},
         {1, value_type{101}}, // cart 2
@@ -389,7 +392,7 @@ TEST(multiple_item_cart_close_queue,
 
         for (auto && value : cart_data.second)
         {
-            EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+            EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
         }
     }
 
@@ -408,14 +411,14 @@ TEST(multiple_item_cart_close_queue, multiple_producer_multiple_consumer_release
 
     using value_type = int;
 
-    scq::slotted_cart_queue<value_type> queue{scq::slot_count{2}, scq::cart_count{3}, scq::cart_capacity{2}};
+    scq::slotted_cart_queue<value_type> queue{{.slots = 2, .carts = 3, .capacity = 2}};
 
     // count number of enqueues
     atomic_count enqueue_count{};
 
     // expected set contains all (expected) results; after the test which set should be empty (each matching result will
     // be crossed out)
-    concurrent_cross_off_list<std::pair<std::size_t, value_type>> expected{
+    concurrent_cross_off_list<std::pair<size_t, value_type>> expected{
         {0, value_type{100}},
         {0, value_type{101}}, // full-cart 1
         {0, value_type{102}},
@@ -500,7 +503,7 @@ TEST(multiple_item_cart_close_queue, multiple_producer_multiple_consumer_release
 
                                   for (auto && value : cart_data.second)
                                   {
-                                      EXPECT_TRUE(expected.cross_off({cart_data.first.slot_id, value}));
+                                      EXPECT_TRUE(expected.cross_off({cart_data.first.value, value}));
                                   }
                               }
                           });

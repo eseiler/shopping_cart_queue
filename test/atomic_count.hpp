@@ -9,9 +9,9 @@
 
 struct atomic_count
 {
-    std::size_t load()
+    size_t load()
     {
-        std::size_t tmp;
+        size_t tmp;
 
         {
             std::unique_lock<std::mutex> count_lock(_count_mutex);
@@ -21,9 +21,9 @@ struct atomic_count
         return tmp;
     }
 
-    std::size_t operator++()
+    size_t operator++()
     {
-        std::size_t tmp;
+        size_t tmp;
         {
             std::unique_lock<std::mutex> count_lock(_count_mutex);
             tmp = ++_count;
@@ -33,7 +33,7 @@ struct atomic_count
         return tmp;
     }
 
-    void wait_at_least(std::size_t value)
+    void wait_at_least(size_t value)
     {
         // this is an inefficient barrier implementation as each ++atomic_count will trigger a notification
         {
@@ -49,5 +49,5 @@ struct atomic_count
 
     std::mutex _count_mutex{};
     std::condition_variable _count_cv{};
-    std::size_t _count;
+    size_t _count;
 };
